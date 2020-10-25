@@ -77,9 +77,9 @@ char* match_on_match(char *sub_str_be_matched, char *sub_pattern){
 
 	if(regcomp(&reg, sub_pattern, REG_EXTENDED|REG_ICASE) < 0){
 		regerror(err, &reg, errbuf, sizeof(errbuf));
-		// printf("[sub_match] sub_str_be_matched: \"%s\"\n", sub_str_be_matched);
-		// printf("[sub_match] sub_pattern: \"%s\"\n", sub_pattern);
-		// printf("[sub_match] err: %s\n", errbuf);
+		printf("[sub_match] sub_str_be_matched: \"%s\"\n", sub_str_be_matched);
+		printf("[sub_match] sub_pattern: \"%s\"\n", sub_pattern);
+		printf("[sub_match] err: %s\n", errbuf);
 	}
 
 	err = regexec(&reg, sub_str_be_matched, nm, pmatch, 0);
@@ -91,9 +91,9 @@ char* match_on_match(char *sub_str_be_matched, char *sub_pattern){
 		exit(-1);
 	}else if(err){
 		regerror(err,&reg,errbuf,sizeof(errbuf));
-		// printf("[sub_match] sub_str_be_matched: \"%s\"\n", sub_str_be_matched);
-		// printf("[sub_match] sub_pattern: \"%s\"\n", sub_pattern);
-		// printf("[sub_match] err: %s\n",errbuf);
+		printf("[sub_match] sub_str_be_matched: \"%s\"\n", sub_str_be_matched);
+		printf("[sub_match] sub_pattern: \"%s\"\n", sub_pattern);
+		printf("[sub_match] err: %s\n",errbuf);
 		exit(-1);
 	}
 
@@ -157,7 +157,7 @@ void android_feature_extration(struct RegResults* android_reg_results, char *str
 
 		if(regcomp(&reg, pattern, REG_EXTENDED|REG_ICASE) < 0){ // REG_ICASE表示匹配字母时忽略大小写
 			regerror(err, &reg, errbuf, sizeof(errbuf));
-			// printf("err: %s\n", errbuf);
+			printf("err: %s\n", errbuf);
 	 	}
 
 	 	err = regexec(&reg, str_be_matched + offset, nm, pmatch, 0);
@@ -174,7 +174,7 @@ void android_feature_extration(struct RegResults* android_reg_results, char *str
 		}
 		else if(err){
 			regerror(err, &reg, errbuf, sizeof(errbuf));
-			// printf("err: %s\n", errbuf);
+			printf("err: %s\n", errbuf);
 			// exit(-1);
 			continue;
 		}
@@ -286,7 +286,7 @@ int _ios_regex_matching(struct RegResults* ios_reg_results, char *str_be_matched
 
 		if(regcomp(&reg, pattern, REG_EXTENDED|REG_ICASE) < 0){ // REG_ICASE表示匹配字母时忽略大小写
 			regerror(err, &reg, errbuf, sizeof(errbuf));
-			// printf("err: %s\n", errbuf);
+			printf("err: %s\n", errbuf);
 	 	}
 
 	 	err = regexec(&reg, str_be_matched, nm, pmatch, 0);
@@ -298,7 +298,7 @@ int _ios_regex_matching(struct RegResults* ios_reg_results, char *str_be_matched
 		}
 		else if(err){
 			regerror(err, &reg, errbuf, sizeof(errbuf));
-			// printf("err: %s\n", errbuf);
+			printf("err: %s\n", errbuf);
 			// exit(-1);
 			continue;
 		}

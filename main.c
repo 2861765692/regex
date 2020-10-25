@@ -110,6 +110,27 @@ char* match_on_match(char *sub_str_be_matched, char *sub_pattern){
 	return match_res;
 }
 
+void match_on_match_for_once(struct RegResults* reg_results, char *match, char *sub_pattern, int patterns_mode){
+	char *sub_match_res;
+	sub_match_res = match_on_match(match, sub_pattern);
+	if(patterns_mode == 1) strcpy(reg_results->os, sub_match_res);
+	if(patterns_mode == 2) strcpy(reg_results->dev, sub_match_res);
+	if(patterns_mode == 3) strcpy(reg_results->ver, sub_match_res);
+	free(sub_match_res); //一定要进行free，否则会造成内存泄露
+}
+
+void match_on_match_for_twice(struct RegResults* reg_results, char *match, char *sub_pattern_r1, char *sub_pattern_r2, int patterns_mode){
+	char *sub_match_res_r1;
+	char *sub_match_res_r2;
+	sub_match_res_r1 = match_on_match(match, sub_pattern_r1);
+	sub_match_res_r2 = match_on_match(sub_match_res_r1, sub_pattern_r2);
+	if(patterns_mode == 1) strcpy(reg_results->os, sub_match_res_r2);
+	if(patterns_mode == 2) strcpy(reg_results->dev, sub_match_res_r2);
+	if(patterns_mode == 3) strcpy(reg_results->ver, sub_match_res_r2);
+	free(sub_match_res_r1); //一定要进行free，否则会造成内存泄露
+	free(sub_match_res_r2); //一定要进行free，否则会造成内存泄露
+}
+
 // ==============================================================================================
 // Andoird
 // ==============================================================================================
@@ -204,28 +225,7 @@ void android_feature_extration(struct RegResults* android_reg_results, char *str
 // iOS
 // ==============================================================================================
 
-void match_on_match_for_once(struct RegResults* ios_reg_results, char *match, char *sub_pattern, int patterns_mode){
-	char *sub_match_res;
-	sub_match_res = match_on_match(match, sub_pattern);
-	if(patterns_mode == 1) strcpy(ios_reg_results->os, sub_match_res);
-	if(patterns_mode == 2) strcpy(ios_reg_results->dev, sub_match_res);
-	if(patterns_mode == 3) strcpy(ios_reg_results->ver, sub_match_res);
-	free(sub_match_res); //一定要进行free，否则会造成内存泄露
-}
-
-void match_on_match_for_twice(struct RegResults* ios_reg_results, char *match, char *sub_pattern_r1, char *sub_pattern_r2, int patterns_mode){
-	char *sub_match_res_r1;
-	char *sub_match_res_r2;
-	sub_match_res_r1 = match_on_match(match, sub_pattern_r1);
-	sub_match_res_r2 = match_on_match(sub_match_res_r1, sub_pattern_r2);
-	if(patterns_mode == 1) strcpy(ios_reg_results->os, sub_match_res_r2);
-	if(patterns_mode == 2) strcpy(ios_reg_results->dev, sub_match_res_r2);
-	if(patterns_mode == 3) strcpy(ios_reg_results->ver, sub_match_res_r2);
-	free(sub_match_res_r1); //一定要进行free，否则会造成内存泄露
-	free(sub_match_res_r2); //一定要进行free，否则会造成内存泄露
-}
-
-void update_ios_reg_results_for_pattern_1(struct RegResults* ios_reg_results, int pattern_i, char *match){
+void update_ios_reg_results_for_osver(struct RegResults* ios_reg_results, int pattern_i, char *match){
 	if(pattern_i == 0){
 		char *sub_pattern = "[0-9._]+";
 		match_on_match_for_once(ios_reg_results, match, sub_pattern, 1);
@@ -237,7 +237,7 @@ void update_ios_reg_results_for_pattern_1(struct RegResults* ios_reg_results, in
 	}
 }
 
-int update_ios_reg_results_for_pattern_2(struct RegResults* ios_reg_results, int pattern_i, char *match){
+int update_ios_reg_results_for_dev(struct RegResults* ios_reg_results, int pattern_i, char *match){
 	if(pattern_i == 0){
 		char *sub_str = "OS";
 		if(!strstr(match, sub_str)){
@@ -255,7 +255,7 @@ int update_ios_reg_results_for_pattern_2(struct RegResults* ios_reg_results, int
 	return false;
 }
 
-void update_ios_reg_results_for_pattern_3(struct RegResults* ios_reg_results, int pattern_i, char *match){
+void update_ios_reg_results_for_devver(struct RegResults* ios_reg_results, int pattern_i, char *match){
 	if((pattern_i == 0) || (pattern_i == 1)){
 		char *sub_pattern = "[0-9]+[a-zA-Z]+[0-9]+[a-zA-Z]?";
 		match_on_match_for_once(ios_reg_results, match, sub_pattern, 3);
@@ -267,7 +267,7 @@ void update_ios_reg_results_for_pattern_3(struct RegResults* ios_reg_results, in
 	}
 }
 
-int _ios_regex_matching(struct RegResults* ios_reg_results, char *str_be_matched, char patterns[][1000], int pattern_cnt, int patterns_mode){
+int ios_regex_matching(struct RegResults* ios_reg_results, char *str_be_matched, char patterns[][1000], int pattern_cnt, int patterns_mode){
 	regex_t reg;
 	for(int pattern_i = 0; pattern_i < pattern_cnt; pattern_i++){
 		if((patterns_mode == 1) && (strlen(ios_reg_results->os) > 0)) continue; // 匹配os的阶段如果ios_reg_results里面已经存有os也就是曾经匹配中了，那就直接continue不用继续匹配了，下面类似。
@@ -312,18 +312,18 @@ int _ios_regex_matching(struct RegResults* ios_reg_results, char *str_be_matched
 				// 这里patterns_mode == 1, 2 或者3分别对应Python代码的pattern1，pattern2和pattern3
 				if(patterns_mode == 1){
 					if((pmatch[i].rm_so == 0) || ((*(str_be_matched + pmatch[i].rm_so - 1) != '/') && (*(str_be_matched + pmatch[i].rm_so - 1) != '_'))){
-						update_ios_reg_results_for_pattern_1(ios_reg_results, pattern_i, match);
+						update_ios_reg_results_for_osver(ios_reg_results, pattern_i, match);
 					}
 				}
 				else if(patterns_mode == 2){
 					int error_match_os;
-					error_match_os = update_ios_reg_results_for_pattern_2(ios_reg_results, pattern_i, match);
+					error_match_os = update_ios_reg_results_for_dev(ios_reg_results, pattern_i, match);
 					if(error_match_os){
 						return pmatch[i].rm_eo; // 把os字段的末尾的index返回
 					}
 				}
 				else if(patterns_mode == 3){
-					update_ios_reg_results_for_pattern_3(ios_reg_results, pattern_i, match);
+					update_ios_reg_results_for_devver(ios_reg_results, pattern_i, match);
 				}
 			}
 		}
@@ -332,49 +332,49 @@ int _ios_regex_matching(struct RegResults* ios_reg_results, char *str_be_matched
 	return false;
 }
 
-void _ios_regex_matching_using_pattern_1(struct RegResults* ios_reg_results, char *str_be_matched){
-	// printf("========> Matching os using _ios_regex_matching_using_pattern_1\n");
+void ios_regex_matching_for_osver(struct RegResults* ios_reg_results, char *str_be_matched){
+	// printf("========> Matching os using ios_regex_matching_for_osver\n");
 	char patterns[][1000] = {
 		"((i?OS)|(MAC OS X)){1}[ ;,/]?((V)|(Ver)|(Version))?[ ;,/]?([0-9._]+)", // os 1
 		"((((i?mac)|(iphone)|(ipad)|(ipod)|(i?watch)){1}([a-zA-Z0-9 ]*)(,[0-9]+)+)|(Mac OS X)){1}[/;]{1}( )?([0-9._]+)", // os 2
 	};
 	int pattern_cnt = sizeof(patterns) / sizeof(patterns[0]); // number of patterns
-	_ios_regex_matching(ios_reg_results, str_be_matched, patterns, pattern_cnt, 1);
+	ios_regex_matching(ios_reg_results, str_be_matched, patterns, pattern_cnt, 1);
 }
 
-int _ios_regex_matching_using_pattern_2(struct RegResults* ios_reg_results, char *str_be_matched){
-	// printf("========> Matching dev using _ios_regex_matching_using_pattern_2\n");
+int ios_regex_matching_for_dev(struct RegResults* ios_reg_results, char *str_be_matched){
+	// printf("========> Matching dev using ios_regex_matching_for_dev\n");
 	char patterns[][1000] = {
 		"((i?mac)|(iphone)|(ipad)|(ipod)|(i?watch)){1}([a-zA-Z0-9 ]*)(,[0-9]+)+", // dev 1
 		// ",((i?mac)|(iphone)|(ipad)|(ipod)|(i?watch)){1}([a-zA-Z0-9 ]*)(,[0-9]+)+]", // dev 2
 	};
 	int pattern_cnt = sizeof(patterns) / sizeof(patterns[0]); // number of patterns
 	int error_match_os;
-	error_match_os = _ios_regex_matching(ios_reg_results, str_be_matched, patterns, pattern_cnt, 2);
+	error_match_os = ios_regex_matching(ios_reg_results, str_be_matched, patterns, pattern_cnt, 2);
 	return error_match_os;
 }
 
-void _ios_regex_matching_using_pattern_3(struct RegResults* ios_reg_results, char *str_be_matched){
-	// printf("========> Matching ver using _ios_regex_matching_using_pattern_3\n");
+void ios_regex_matching_for_devver(struct RegResults* ios_reg_results, char *str_be_matched){
+	// printf("========> Matching ver using ios_regex_matching_for_devver\n");
 	char patterns[][1000] = {
 		"((build)|(model)|(mobile)){1}[ /]{1}([0-9]+[a-zA-Z]+[0-9]+[a-zA-Z]?)", // ver 1
 		"[(;]{1}[ ]?([0-9]+[a-zA-Z]+[0-9]+[a-zA-Z]?)[);]{1}[ ]?", // ver 2
 		"((i?OS)|(MAC OS X)){1}[ ;,/]?((V)|(Ver)|(Version))?[ ;,/]?([0-9._]+),([0-9]+[a-zA-Z]+[0-9]+[a-zA-Z]?),",
 	};
 	int pattern_cnt = sizeof(patterns) / sizeof(patterns[0]); // number of patterns
-	_ios_regex_matching(ios_reg_results, str_be_matched, patterns, pattern_cnt, 3);
+	ios_regex_matching(ios_reg_results, str_be_matched, patterns, pattern_cnt, 3);
 }
 
 void ios_feature_extration(struct RegResults* ios_reg_results, char *str_be_matched){
 	initialize_reg_results(ios_reg_results);
-	_ios_regex_matching_using_pattern_1(ios_reg_results, str_be_matched); // 匹配osver
+	ios_regex_matching_for_osver(ios_reg_results, str_be_matched); // 匹配osver
 	int error_match_os;
-	error_match_os = _ios_regex_matching_using_pattern_2(ios_reg_results, str_be_matched); // 匹配dev
+	error_match_os = ios_regex_matching_for_dev(ios_reg_results, str_be_matched); // 匹配dev
 	if(error_match_os){
 		// printf("The osver is miss matched as the dev, and it is end with index of %i, so cut it out and match it again!\n", error_match_os);
-		_ios_regex_matching_using_pattern_2(ios_reg_results, str_be_matched + error_match_os);
+		ios_regex_matching_for_dev(ios_reg_results, str_be_matched + error_match_os);
 	}
-	_ios_regex_matching_using_pattern_3(ios_reg_results, str_be_matched); // 匹配devver
+	ios_regex_matching_for_devver(ios_reg_results, str_be_matched); // 匹配devver
 }
 
 int main(){

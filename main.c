@@ -270,6 +270,7 @@ void update_ios_reg_results_for_devver(struct RegResults* ios_reg_results, int p
 int ios_regex_matching(struct RegResults* ios_reg_results, char *str_be_matched, char patterns[][1000], int pattern_cnt, int patterns_mode){
 	regex_t reg;
 	for(int pattern_i = 0; pattern_i < pattern_cnt; pattern_i++){
+		// 这里patterns_mode == 1, 2 或者3分别对应osver, dev和devver
 		if((patterns_mode == 1) && (strlen(ios_reg_results->os) > 0)) continue; // 匹配os的阶段如果ios_reg_results里面已经存有os也就是曾经匹配中了，那就直接continue不用继续匹配了，下面类似。
 		if((patterns_mode == 2) && (strlen(ios_reg_results->dev) > 0)) continue;
 		if((patterns_mode == 3) && (strlen(ios_reg_results->ver) > 0)) continue;
@@ -309,7 +310,6 @@ int ios_regex_matching(struct RegResults* ios_reg_results, char *str_be_matched,
 				memset(match, '\0', sizeof(match));
 				memcpy(match, str_be_matched + pmatch[i].rm_so, len);
 				// printf(">> [%i] match: \"%s\"\n", i, match);
-				// 这里patterns_mode == 1, 2 或者3分别对应Python代码的pattern1，pattern2和pattern3
 				if(patterns_mode == 1){
 					if((pmatch[i].rm_so == 0) || ((*(str_be_matched + pmatch[i].rm_so - 1) != '/') && (*(str_be_matched + pmatch[i].rm_so - 1) != '_'))){
 						update_ios_reg_results_for_osver(ios_reg_results, pattern_i, match);
